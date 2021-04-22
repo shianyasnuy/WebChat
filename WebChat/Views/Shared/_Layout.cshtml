@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebChat</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/ChatPanel.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-dark bg-dark">
+            <div class="container">
+                <div class="col-md-4">
+                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                </div>
+                
+                @if (SessionInfo.CurrUser != null)
+                {
+                    <div class="navbar-nav col-md-4 offset-md-4" id="userInfo">
+                        <a id="userName" class="nav-item nav-link active">@SessionInfo.CurrUser.NickName </a>
+                        <a id="logOut" class="nav-item badge badge-pill badge-secondary" asp-controller="Home" asp-action="LogOut">Log out</a>
+                    </div>
+                }
+            </div>
+</nav>
+    </header>
+    <div class="container text-center">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2021 - WebChat - shianyasnuy
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

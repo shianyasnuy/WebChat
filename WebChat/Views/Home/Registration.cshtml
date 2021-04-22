@@ -1,0 +1,24 @@
+﻿@model WebChat.Models.RegForm
+
+@{
+    ViewData["Title"] = "Registration";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Register new user</h1>
+    @if (!(TempData["FailRegMessage"] is null))
+    {
+        <div class="text-danger">@TempData["FailRegMessage"].ToString()</div>
+    }
+
+    @using (Html.BeginForm("Register", "User", FormMethod.Post))
+    {
+        @Html.TextBoxFor( f => f.Username, new { placeholder = "NickName" })
+        <br />
+        @Html.PasswordFor(f => f.Password, new { placeholder = "Password" })
+        <br />
+        @Html.PasswordFor(f => f.RepPassword, new { placeholder = "Repeat password" })
+        <br />
+        <input type="submit" value="Register">
+    }
+</div>

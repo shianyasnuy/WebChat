@@ -1,0 +1,34 @@
+{
+  "dependencies": {
+    "signalr1": {
+      "restored": true,
+      "restoreTime": "2021-04-21T18:35:37.5766917Z"
+    },
+    "mssql1": {
+      "restored": true,
+      "restoreTime": "2021-04-21T18:45:50.6756433Z"
+    }
+  },
+  "parameters": {
+    "signalr1.resourceGroupName": {
+      "Name": "signalr1.resourceGroupName",
+      "Type": "resourceGroup",
+      "Value": "webchatresorcegroup"
+    },
+    "mssql1.subscriptionId": {
+      "Name": "mssql1.subscriptionId",
+      "Type": "subscription",
+      "Value": "6a33cf63-0c0d-40a3-97dc-c28d35b356dd"
+    },
+    "mssql1.resourceGroupName": {
+      "Name": "mssql1.resourceGroupName",
+      "Type": "resourceGroup",
+      "Value": "webchatresorcegroup"
+    },
+    "signalr1.subscriptionId": {
+      "Name": "signalr1.subscriptionId",
+      "Type": "subscription",
+      "Value": "6a33cf63-0c0d-40a3-97dc-c28d35b356dd"
+    }
+  }
+}

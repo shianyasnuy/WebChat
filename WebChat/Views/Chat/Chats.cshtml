@@ -1,0 +1,41 @@
+﻿@model WebChat.ViewModels.ChatsViewModel
+
+@{
+    ViewData["Title"] = "Chats";
+}
+
+
+<div class="row justify-content-around">
+    <div class="col-4">
+        <h4>Chats:</h4>
+        @foreach (var chat in Model.Chats)
+        {
+            <p>
+                @Html.ActionLink(chat.ChatName, "Chat", "Chat",
+                    new { chatId = chat.Id })
+            </p>
+        }
+    </div>
+
+    <div class="col-4">
+        <h4>Users:</h4>
+        @foreach (var user in Model.Users)
+        {
+            <p>
+                @Html.ActionLink(user.NickName, "PrivateChat", "Chat",
+                    new { user1Id = SessionInfo.CurrUser.Id, user2Id = user.Id })
+            </p>
+        }
+    </div>
+
+    <div class="col-4">
+        <h4>New Group Chat:</h4>
+        @using (Html.BeginForm("NewGroupChat", "Chat", FormMethod.Post))
+        {
+            @Html.TextBoxFor(u => u.NewGroupChat.ChatName, 
+                new { placeholder = "Group chat name", pattern = "[a-zA-Z0-9]+" })
+            <br />
+            <input type="submit" value="Create">
+        }
+    </div>
+</div>

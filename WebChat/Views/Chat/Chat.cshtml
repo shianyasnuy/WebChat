@@ -1,0 +1,303 @@
+﻿@using Microsoft.AspNetCore.Razor.Language.Intermediate
+@using Microsoft.CodeAnalysis
+@using Microsoft.CodeAnalysis.CSharp.Syntax
+@model WebChat.ViewModels.ChatViewModel
+
+@{
+    ViewData["Title"] = Model.Chat.ChatName;
+}
+
+<script>
+    var messageToReplyId = 0;
+    var messageToDeleteId = 0;
+    var textToReply = '';
+    var userToReply = '';
+    var greenMsg = document.createElement('div');
+    var redMsg = document.createElement('div');
+    var fetchOpCount = 1;
+    var messagesAdded = 0;
+    var newMessageId = 0;
+</script>
+<script src="/js/MessageEvents.js"></script>
+
+<h3>@Model.Chat.ChatName</h3>
+<div class="mesgs border border-light">
+    <div id="ChatPane" class="text-center msg_history">
+        <a href="#" class="badge badge-primary" id="loadMoreBtn">Load more</a>
+        @foreach (var msg in Model.Messages)
+        {
+            @if (Model.CurrUser.Id == msg.User.Id)
+            {
+                <div class="alert alert-primary" onclick="(function(e) { if (messageToDeleteId == 0 || messageToDeleteId != @msg.Id) { messageToDeleteId = @msg.Id;showDelete();redMsg.className = 'alert alert-primary';e.className = 'alert alert-danger border border-danger';redMsg = e;greenMsg.className = 'alert alert-dark'; } else { messageToDeleteId = 0;showSend();e.className = 'alert alert-primary'; } })(this);">
+                    @if (msg.MessageToReply != null)
+                    {
+                        <div class="row justify-content-center">
+                            <div class="align-self-center"><b>@msg.MessageToReply.Text &lt;@msg.MessageToReply.User.NickName&gt;</b></div>
+                        </div>
+                    }
+                    <div class="row">
+                        <div class="col-md-4"><b>@msg.Text</b></div>
+                        <div class="col-md-4 offset-4">@msg.User.NickName - @msg.Time.ToString("MM/dd/yyyy H:mm")</div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-dark" onclick="(function(e) { if (messageToReplyId == 0 || messageToReplyId != @msg.Id) { messageToReplyId = @msg.Id;textToReply = '@msg.Text';userToReply = '@msg.User.NickName';showReply();redMsg.className = 'alert alert-primary';greenMsg.className = 'alert alert-dark';e.className = 'alert alert-success border border-success';greenMsg = e; } else { messageToReplyId = 0;textToReply = '';userToReply = '';showSend();e.className = 'alert alert-dark'; } })(this);">
+                    @if (msg.MessageToReply != null)
+                    {
+                        <div class="row justify-content-center">
+                            <div class="align-self-center"><b>@msg.MessageToReply.Text &lt;@msg.MessageToReply.User.NickName&gt;</b></div>
+                        </div>
+                    }
+                    <div class="row">
+                        <div class="col-md-4"><b>@msg.Text</b></div>
+                        <div class="col-md-4 offset-4">@msg.User.NickName - @msg.Time.ToString("MM/dd/yyyy H:mm")</div>
+                    </div>
+                </div>
+            }
+            
+        }
+    </div>
+    <script>
+        var el = document.getElementById("ChatPane");
+        el.scrollTop = 5000;
+    </script>
+
+    <div class="container fixed-bottom text-center input-group mb-3 alert alert-secondary border border-info type_msg" id="inputForm">
+        <input class="form-control" type="text" id="message" />
+        <input class="btn btn-outline-secondary btn-primary" type="submit" id="sendBtn" value="Send" />
+        <input class="btn btn-outline-secondary btn-primary" type="submit" id="replyBtn" value="Reply" />
+        <input class="btn btn-outline-secondary btn-primary" type="submit" id="replyPrivBtn" value="Reply privately" />
+        <input class="btn btn-outline-secondary btn-primary" type="submit" id="editBtn" value="Edit" />
+        <input class="btn btn-outline-secondary btn-primary" type="submit" id="deleteBtn" value="Delete" />
+        <input class="btn btn-outline-secondary btn-primary" type="submit" id="deletePrivBtn" value="Delete for me" />
+    </div>
+</div>
+
+<script src="/js/microsoft/signalr/dist/browser/signalr.js"></script>
+<script src="/js/strftime.js"></script>
+<script type="text/javascript">
+    const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/Chat/Chat/@Model.Chat.Id")
+        .build();
+
+    hubConnection.on("Send",
+        function(message, messageId, userName, time, textToReply, userToReply) {
+
+            let panel = document.getElementById("ChatPane");
+
+            let msgBox = document.createElement("div");
+            if (userName == "@SessionInfo.CurrUser.NickName") {
+                msgBox.className = "alert alert-primary";
+                let elem = msgBox;
+                let id = messageId;
+                msgBox.onclick = function() { myMsgAdded(elem, id); };
+            }
+            else {
+                let elem = msgBox;
+                let msg = {
+                    id: messageId,
+                    user: { nickName: userName },
+                    text: message
+                };
+                msgBox.className = "alert alert-dark";
+                msgBox.onclick = function () { diffMsgAdded(elem, msg); };
+            }
+
+            let row = document.createElement("div");
+            row.className = "row";
+
+            let msgCol = document.createElement("div");
+            msgCol.className = "col-md-4";
+            let msgText = document.createElement("b");
+            msgText.innerHTML = message;
+
+            msgCol.appendChild(msgText);
+
+            let infoCol = document.createElement("div");
+            infoCol.innerHTML = userName + " - " + time;
+            infoCol.className = "col-md-4 offset-4";
+
+            row.appendChild(msgCol);
+            row.appendChild(infoCol);
+
+            if (messageToReplyId != 0) {
+                let replyRow = document.createElement("div");
+                let replyCol = document.createElement("div");
+                replyRow.className = "row justify-content-center";
+                replyCol.className = "align-self-center";
+                let replyText = document.createElement("b");
+                replyText.innerHTML = textToReply + " &lt;" + userToReply + "&gt;";
+
+                replyCol.appendChild(replyText);
+                replyRow.appendChild(replyCol);
+                msgBox.appendChild(replyRow);
+            }
+
+            msgBox.appendChild(row);
+            panel.appendChild(msgBox);
+
+        });
+
+    function MessageSend(e) {
+        messagesAdded += 1;
+        let message = document.getElementById("message").value;
+        let userName = "@Model.CurrUser.NickName";
+        let time = "@DateTime.Now.ToString("MM/dd/yyyy H:mm")";
+
+        $.ajax({
+            url: '/Message/SendMessage',
+            data: {
+                Text: message,
+                ChatId: @Model.Chat.Id,
+                UserId: @Model.CurrUser.Id,
+                MessageToReplyId: messageToReplyId
+            },
+            success: function (result) {
+                hubConnection.invoke("Send", message, result.sentId, userName, time, textToReply, userToReply);
+            }
+        });
+    }
+
+    function ReplyPrivately(e) {
+        let message = document.getElementById("message").value;
+        $.ajax({
+            url: '/Message/ReplyPrivate',
+            data: {
+                Text: message,
+                ChatId: @Model.Chat.Id,
+                UserId: @Model.CurrUser.Id,
+                MessageToReplyId: messageToReplyId
+            },
+            success: function(result) {
+                window.location.href = result.redirectToUrl;
+            }
+        });
+    }
+
+    function DeleteMessage(e) {
+        messagesAdded -= 1;
+        $.ajax({
+            url: '/Message/Delete',
+            data: {
+                messageId: messageToDeleteId
+            },
+            success: function(result) {
+                document.getElementById("ChatPane").removeChild(redMsg);
+            }
+        });
+    }
+
+    function DeleteMessagePriv(e) {
+        messagesAdded -= 1;
+        $.ajax({
+            url: `/Message/DeletePrivate`,
+            data: {
+                messageId: messageToDeleteId
+            },
+            success: function(result) {
+                document.getElementById("ChatPane").removeChild(redMsg);
+            }
+        });
+    }
+
+    function EditMessage(e) {
+        let text = document.getElementById("message").value;
+        $.ajax({
+            url: '/Message/Edit',
+            data: {
+                MessageId: messageToDeleteId,
+                Text: text
+            },
+            success: function(result) {
+                let field = redMsg.getElementsByTagName('b')[1] ? 
+                    redMsg.getElementsByTagName('b')[1] :
+                    redMsg.getElementsByTagName('b')[0];
+                field.innerHTML = text;
+            }
+        });
+    }
+
+    function FetchNext(e) {
+        $.ajax({
+            url: '/Chat/FetchNext',
+            data: {
+                ChatId: @Model.Chat.Id,
+                FetchOpNo: fetchOpCount,
+                MessagesAdded: messagesAdded
+            },
+            success: function(result) {
+                messagesAdded = 0;
+                fetchOpCount++;
+                console.log(result);
+                console.log(result.messages.length);
+                for (var i = 0; i < result.messages.length; i++) {
+
+                    let panel = document.getElementById("ChatPane");
+                    let addBtn = document.getElementById("loadMoreBtn");
+
+                    let msgBox = document.createElement("div");
+                    if (result.messages[i].user.nickName == "@SessionInfo.CurrUser.NickName") {
+                        msgBox.className = "alert alert-primary";
+                        let elem = msgBox;
+                        let id = result.messages[i].id;
+                        msgBox.onclick = function() { myMsgAdded(elem, id); };
+                    } else {
+                        msgBox.className = "alert alert-dark";
+                        let elem = msgBox;
+                        let msg = result.messages[i];
+                        msgBox.onclick = function() { diffMsgAdded(elem, msg); };
+                    }
+
+                    let row = document.createElement("div");
+                    row.className = "row";
+
+                    let msgCol = document.createElement("div");
+                    msgCol.className = "col-md-4";
+                    let msgText = document.createElement("b");
+                    msgText.innerHTML = result.messages[i].text;
+
+                    msgCol.appendChild(msgText);
+
+                    let infoCol = document.createElement("div");
+
+                    infoCol.innerHTML = result.messages[i].user.nickName + " - "
+                        + strftime('%d/%m/%Y %H:%M', new Date(result.messages[i].time));
+                    infoCol.className = "col-md-4 offset-4";
+
+                    row.appendChild(msgCol);
+                    row.appendChild(infoCol);
+
+                    if (result.messages[i].messageToReply != null) {
+                        let replyRow = document.createElement("div");
+                        let replyCol = document.createElement("div");
+                        replyRow.className = "row justify-content-center";
+                        replyCol.className = "align-self-center";
+                        let replyText = document.createElement("b");
+                        replyText.innerHTML = result.messages[i].messageToReply.text + " &lt;"
+                            + result.messages[i].messageToReply.user.nickName + "&gt;";
+
+                        replyCol.appendChild(replyText);
+                        replyRow.appendChild(replyCol);
+                        msgBox.appendChild(replyRow);
+                    }
+
+                    msgBox.appendChild(row);
+                    panel.insertBefore(msgBox, addBtn.nextSibling);
+                }
+            }
+        });
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", MessageSend);
+    document.getElementById("replyBtn").addEventListener("click", MessageSend);
+    document.getElementById("replyPrivBtn").addEventListener("click", ReplyPrivately);
+    document.getElementById("deleteBtn").addEventListener("click", DeleteMessage);
+    document.getElementById("deletePrivBtn").addEventListener("click", DeleteMessagePriv);
+    document.getElementById("editBtn").addEventListener("click", EditMessage);
+    document.getElementById("loadMoreBtn").addEventListener("click",FetchNext);
+
+    hubConnection.start();
+</script>
+<script src="/js/MessageForm.js"></script>

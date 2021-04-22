@@ -1,0 +1,24 @@
+﻿@model WebChat.Models.User
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to WebChat</h1>
+    @if (!(TempData["FailMessage"] is null))
+    {
+        <div class="text-danger">@TempData["FailMessage"].ToString()</div>
+    }
+
+    @using (Html.BeginForm("LogIn", "User", FormMethod.Post))
+    {
+        @Html.TextBoxFor(u => u.NickName, new { placeholder = "NickName" })
+        <br />
+        @Html.PasswordFor(u => u.Password, new { placeholder = "Password" })
+        <br />
+        <input type="submit" value="Log in">
+    }
+
+    <a asp-action="Registration">Register as a new user</a>
+</div>
